@@ -1,8 +1,5 @@
-import React, { useState, useEffect, useReducer, createContext, useContext } from 'react';
+import React, { useState, useEffect, useReducer } from 'react';
 import uuid from 'uuid/v4';
-
-// create context, voorlopig leeg
-const TodoContext = createContext(null)
 
 // initial todo's
 const initialTodos = [
@@ -22,6 +19,11 @@ const initialTodos = [
     complete: true,
   }
 ];
+
+// A reducer function always receives the current state and an action as arguments. 
+// Depending on the mandatory type of the action, 
+// it decides what task to perform in the switch case statement, 
+// and returns a new state based on the implementation details.
 
 // filterReducer om alleen die todo's te laten zien die we willen zien (allemaal, alleen al gedaan, alleen nog te doen)
 const filterReducer = (state, action) => {
@@ -62,6 +64,9 @@ const todoReducer = (state, action) => {
           return todo
         }
       });
+    // If an action of this kind passes the reducer, 
+    // the action comes with an additional payload, the new todo item’s task, 
+    // to concat the new todo item to the current todo items in the state. 
     case 'ADD_TODO':
       return state.concat({
         task: action.task,
@@ -106,12 +111,11 @@ function App() {
   })
  
   return (
-    <TodoContext.Provider value={dispatchTodos}>
+    <div>
       <Filter dispatch={dispatchFilter} />
-      {/* with context you don't need to pass them as props*/}
-      <TodoList todos={filteredTodos} />
-      <AddTodo />
-    </TodoContext.Provider>
+      <TodoList dispatch={dispatchTodos} todos={filteredTodos} />
+      <AddTodo dispatch={dispatchTodos} />
+    </div>
   );
 }
 
@@ -145,22 +149,19 @@ const Filter = ({dispatch}) => {
 }
 
 // const TodoList en const TodoItem
-// krijgt filteredTodos mee via de props onder de naam en {todos}
-// TodoItem krijgt dispatchTodos mee via useContext, dus uit de props halen en niet doorgeven!
-const TodoList = ({ todos }) => {
+// krijgt dispatchTodos en filteredTodos mee via de props onder de namen {dispatch} en {todos}
+const TodoList = ({ dispatch, todos }) => {
   return(
     <ul>
       {todos.map(todo => (
-        <TodoItem key={todo.id} todo={todo} />
+        <TodoItem key={todo.id} dispatch={dispatch} todo={todo} />
       ))}
     </ul>
   )
 }
 
 // TodoItem component
-// krijgt dispatchTodos mee via useContext, dus uit de props halen
-const TodoItem = ({ todo }) => {
-  const dispatch = useContext(TodoContext)
+const TodoItem = ({ dispatch, todo }) => {
   const handleChange = () =>
     dispatch({
       type: todo.complete ? 'UNDO_TODO' : 'DO_TODO',
@@ -181,11 +182,9 @@ const TodoItem = ({ todo }) => {
 }
 
 // AddTodo component
-// krijgt dispatchTodos mee via useContext, dus uit de props halen
+// krijgt dispatchTodos mee via de props onder de naam {dispatch}
 // en heeft zijn eigen local state voor het inputveld
-const AddTodo = () => {
-  const dispatch = useContext(TodoContext);
-
+const AddTodo = ({dispatch}) => {
   const [task, setTask] = useState('');
 
   const handleSubmit = event => {
